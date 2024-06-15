@@ -13,9 +13,8 @@
 #include "RDBType.h"
 #include "Value.h"
 
-namespace rdbreader
+namespace reader
 {
-
 
 std::string readEncodedString(char ** mapped, Length length)
 {
@@ -203,14 +202,13 @@ void printKV(char ** mapped, uint64_t expiration_sec)
             break;
     }
 }
-}
 
 RDBReader::RDBReader(const std::string filename) : filename(filename)
 {
     std::cout << "filename: " << filename << std::endl;
 }
 
-std::shared_ptr<RedisHeader> RDBReader::readHeader(std::unique_ptr<RedisHeader> /* in */) const
+std::shared_ptr<RedisHeader> reader::RDBReader::readHeader(std::unique_ptr<RedisHeader> /* in */) const
 {
     auto in = std::make_shared<RedisHeader>();
     int fd = ::open(filename.c_str(), O_RDONLY);
@@ -248,7 +246,7 @@ std::shared_ptr<RedisHeader> RDBReader::readHeader(std::unique_ptr<RedisHeader> 
         switch (rdb_type)
         {
             case RDBType::AUXILIARY:
-                rdbreader::printAuxiliary(&mapped, *in);
+                reader::printAuxiliary(&mapped, *in);
                 break;
             case RDBType::DATABASE_SELECTOR:
                 byte = static_cast<int>(static_cast<uint8_t>(*mapped));
@@ -256,25 +254,25 @@ std::shared_ptr<RedisHeader> RDBReader::readHeader(std::unique_ptr<RedisHeader> 
                 mapped += 1;
                 break;
             case RDBType::RESIZE_DB:
-                rdbreader::printResizeDB(&mapped, *in);
+                reader::printResizeDB(&mapped, *in);
                 break;
             case RDBType::END_OF_FILE:
                 break;
             case RDBType::VALUE_TYPE:
                 mapped -= 1;
-                rdbreader::printKV(&mapped, 0);
+                reader::printKV(&mapped, 0);
                 break;
             case RDBType::EXPIRE_TIME_MS:
                 std::memcpy(buf, mapped, 8);
                 mapped += 8;
                 ms = boost::endian::load_little_u64(buf);
-                rdbreader::printKV(&mapped, ms);
+                reader::printKV(&mapped, ms);
                 break;
             case RDBType::EXPIRE_TIME_SECONDS:
                 std::memcpy(buf, mapped, 4);
                 mapped += 4;
                 n = boost::endian::load_little_u32(buf);
-                rdbreader::printKV(&mapped, n * 1000);
+                reader::printKV(&mapped, n * 1000);
                 break;
             case RDBType::UNEXPECTED:
                 printf("Unexpected\n");
@@ -307,4 +305,5 @@ void RDBReader::printHeaderInfo(RedisHeader & in) const
     printf("\tChecksum: '%lu'\n", in.checksum);
     printf("Resize DB:\n\tHash Table size: '%d'\n", in.hash_table_size);
     printf("\tExpiry Hash table size: '%d'\n", in.expiry_hash_table_used);
+}
 }

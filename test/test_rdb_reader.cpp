@@ -1,8 +1,7 @@
-#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <boost/endian/conversion.hpp>
-#include "../src/RDBReader.h"
+#include "../src/RDB.h"
 
 // This tells Catch to provide a main() - only do this in one cpp file
 #define CATCH_CONFIG_MAIN
@@ -10,7 +9,7 @@
 
 TEST_CASE("RDBReader constructor", "[RDBReader]")
 {
-    RDBReader rdb_reader("../dump.rdb");
+    rdb::reader::RDBReader rdb_reader("../list-quicklist.rdb");
     try
     {
         auto in = rdb_reader.readHeader(std::make_unique<RedisHeader>());

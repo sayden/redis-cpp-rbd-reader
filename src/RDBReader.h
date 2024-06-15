@@ -8,6 +8,16 @@
 #include "Length.h"
 #include "RedisHeader.h"
 
+namespace reader
+{
+std::string readEncodedString(char ** mapped, Length length);
+int readIntEncodedAsString(char * mapped, Length length);
+
+void printAuxiliary(char ** mapped);
+void printResizeDB(char ** mapped);
+void printKV(char ** mapped, int expiration_sec);
+void printKV(char ** mapped, uint64_t expiration_sec);
+
 class RDBReader
 {
 public:
@@ -18,16 +28,6 @@ public:
     int fd;
     std::string filename;
 };
-
-namespace rdbreader
-{
-std::string readEncodedString(char ** mapped, Length length);
-int readIntEncodedAsString(char * mapped, Length length);
-
-void printAuxiliary(char ** mapped);
-void printResizeDB(char ** mapped);
-void printKV(char ** mapped, int expiration_sec);
-void printKV(char ** mapped, uint64_t expiration_sec);
 
 }
 
