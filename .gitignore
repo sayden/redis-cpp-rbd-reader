@@ -30,3 +30,15 @@
 *.exe
 *.out
 *.app
+
+# build folder
+build
+
+# vcpkd
+vcpkg
+vcpkg_installed
+
+# vscode
+.vscode
+
+
