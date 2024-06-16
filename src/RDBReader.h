@@ -22,8 +22,8 @@ class RDBReader
 {
 public:
     explicit RDBReader(std::string filename);
-    void printHeaderInfo(RedisHeader & in) const;
-    std::shared_ptr<RedisHeader> readHeader(std::unique_ptr<RedisHeader> in) const;
+    void printHeaderInfo(RedisHeader * in) const;
+    std::unique_ptr<RedisHeader> readHeader() const;
 
     int fd;
     std::string filename;

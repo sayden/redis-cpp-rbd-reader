@@ -7,12 +7,18 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
+void AddOne(std::shared_ptr<int> input)
+{
+    *input += 1;
+}
+
 TEST_CASE("RDBReader constructor", "[RDBReader]")
 {
-    rdb::reader::RDBReader rdb_reader("../list-quicklist.rdb");
+    rdb::reader::RDBReader rdb_reader("../dump.rdb");
     try
     {
-        auto in = rdb_reader.readHeader(std::make_unique<RedisHeader>());
+        auto in = rdb_reader.readHeader();
+        rdb_reader.printHeaderInfo(in.get());
         REQUIRE(in->magic == "REDIS");
         REQUIRE(in->version == "0011");
         REQUIRE(in->bits == 64);
@@ -23,11 +29,19 @@ TEST_CASE("RDBReader constructor", "[RDBReader]")
         REQUIRE(in->hash_table_size == 3);
         REQUIRE(in->expiry_hash_table_used == 2);
         REQUIRE(in->checksum == 13314309817343659540ULL);
-        rdb_reader.printHeaderInfo(*in);
     }
     catch (const std::exception & e)
     {
         std::cerr << e.what() << std::endl;
         FAIL();
     }
+}
+
+TEST_CASE("SmartPointers stuff", "[UniquePtr]")
+{
+    auto p = std::make_shared<int>(42);
+    REQUIRE(*p == 42);
+
+    AddOne(p);
+    REQUIRE(*p == 43);
 }

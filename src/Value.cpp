@@ -29,6 +29,8 @@ ValueType get(char ** mapped)
             return ValueType::SORTED_SET_ZIP_LIST;
         case 0x0d:
             return ValueType::HASH_ZIP_LIST;
+        case 0x0e:
+            return ValueType::LIST_QUICK_LIST;
         default:
             return ValueType::UNKNOWN;
     }

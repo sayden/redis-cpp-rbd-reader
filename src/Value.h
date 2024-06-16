@@ -16,6 +16,7 @@ enum class ValueType
     STREAM,
     SORTED_SET_ZIP_LIST,
     HASH_ZIP_LIST,
+    LIST_QUICK_LIST,
     UNKNOWN,
 };
 

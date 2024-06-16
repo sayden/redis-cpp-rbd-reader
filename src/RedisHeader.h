@@ -9,14 +9,15 @@ struct RedisHeader
     std::string magic;
     std::string version;
     std::string redis_version;
-    uint8_t bits;
-    uint32_t ctime;
-    uint32_t used_memory;
-    uint8_t aof_base;
-    uint8_t database_selector;
-    uint32_t hash_table_size;
-    uint32_t expiry_hash_table_used;
-    uint64_t checksum;
+    uint8_t bits = 0;
+    uint32_t ctime = 0;
+    uint32_t used_memory = 0;
+    uint8_t aof_base = 0;
+    uint8_t database_selector = 0;
+    uint32_t hash_table_size = 0;
+    uint32_t expiry_hash_table_used = 0;
+    uint64_t checksum = 0;
+    uint32_t aof_preamble = 0;
 };
 
 #endif
