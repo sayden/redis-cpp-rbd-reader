@@ -8,6 +8,7 @@ compile:
 all:
 	@echo "All..."
 	CURRENT_DIR=`pwd`
+	export MAKE_CXX_FLAGS=""
 	rm -rf build && mkdir build && cd build && cmake $(CMAKE_TOOLCHAIN_FILE) .. && cmake --build . && ctest --verbose
 	cd "${CURRENT_DIR}"
 

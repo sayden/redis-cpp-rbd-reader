@@ -1,6 +1,8 @@
 #ifndef RDBTYPE_H
 #define RDBTYPE_H
 
+#include <cstdint>
+#include <string>
 enum class RDBType
 {
     AUXILIARY,
@@ -15,7 +17,9 @@ enum class RDBType
 
 namespace rdbtype
 {
+std::string toString(RDBType);
 RDBType getBlock(char **);
+RDBType getBlock(const char * type, uint64_t & offset);
 }
 
 #endif

@@ -1,6 +1,8 @@
 #ifndef VALUE_H
 #define VALUE_H
 
+#include <cstdint>
+
 // A Redis value starts with an optional byte 0xFC or 0xFD if there's an expiration time for the key
 // Then, the value type is specified by a byte that can be one of the following:
 enum class ValueType
@@ -24,6 +26,7 @@ enum class ValueType
 namespace valuetype
 {
 ValueType get(char **);
+ValueType get(const char * mapped, uint64_t & offset);
 }
 
 #endif
