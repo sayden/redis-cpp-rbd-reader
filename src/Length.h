@@ -19,7 +19,6 @@ enum class Length
 namespace length
 {
 Length fromByte(const char * mapped);
-int get(char ** mapped, Length l);
 int get(const char * mapped, uint64_t & offset, Length l);
 std::string toString(Length length);
 }

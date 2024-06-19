@@ -25,7 +25,6 @@ enum class ValueType
 
 namespace valuetype
 {
-ValueType get(char **);
 ValueType get(const char * mapped, uint64_t & offset);
 }
 
