@@ -8,8 +8,7 @@ compile:
 all:
 	@echo "All..."
 	CURRENT_DIR=`pwd`
-	export MAKE_CXX_FLAGS=""
-	rm -rf build && mkdir build && cd build && cmake $(CMAKE_TOOLCHAIN_FILE) .. && cmake --build . && ctest --verbose
+	rm -rf build && mkdir build && cd build && cmake $(CMAKE_TOOLCHAIN_FILE) .. && cmake --build . && ctest --verbose && valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s tests
 	cd "${CURRENT_DIR}"
 
 test: compile
@@ -19,7 +18,10 @@ test: compile
 	cd "${CURRENT_DIR}"
 
 valgrind:
-	@echo "Valgrinding..."
+	@echo "Valgrinding tests..."
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s tests
+	@echo "Valgrinding binary..."
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s rediscpp
 
 massif:
 	@echo "Creating massif file..."

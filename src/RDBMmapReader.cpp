@@ -24,7 +24,7 @@ RDBMmapReader::RDBMmapReader(std::string filename)
         throw std::runtime_error("Error getting file size");
     }
 
-    auto file_size = sb.st_size;
+    file_size = sb.st_size;
 
     auto * original_mmap = mmap(nullptr, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
     mapped = static_cast<char *>(original_mmap);
@@ -34,10 +34,17 @@ RDBMmapReader::RDBMmapReader(std::string filename)
         throw std::runtime_error("Error mapping file");
     }
 
+    if (file_size < 9)
+    {
+        munmap(mapped, file_size);
+        close(fd);
+        throw std::runtime_error("Error: file is empty");
+    }
+
     header.magic = std::string(&mapped[offset], 5);
-    offset += 5;
+    offsetAdvance(5);
     header.version = std::string(&mapped[offset], 4);
-    offset += 4;
+    offsetAdvance(4);
 }
 
 std::optional<std::unique_ptr<Token>> RDBMmapReader::next()
@@ -60,7 +67,7 @@ std::optional<std::unique_ptr<Token>> RDBMmapReader::next()
             return getResizeDB();
         case RDBType::END_OF_FILE:
             std::memcpy(buf, &mapped[offset], 8);
-            offset += 8;
+            offsetAdvance(8);
             header.checksum = boost::endian::load_little_u64(buf);
             finished = true;
             return std::make_unique<Uint64Token>(Uint64Token{RDBType::END_OF_FILE, "CRC32", header.checksum});
@@ -69,11 +76,11 @@ std::optional<std::unique_ptr<Token>> RDBMmapReader::next()
             return getKV(0);
         case RDBType::EXPIRE_TIME_MS:
             std::memcpy(buf, &mapped[offset], 8);
-            offset += 8;
+            offsetAdvance(8);
             return getKV(boost::endian::load_little_u64(buf));
         case RDBType::EXPIRE_TIME_SECONDS:
             std::memcpy(buf, &mapped[offset], 4);
-            offset += 4;
+            offsetAdvance(4);
             return getKV(boost::endian::load_little_u32(buf));
         case RDBType::UNEXPECTED:
             printf("Unexpected\n");
@@ -137,7 +144,7 @@ std::optional<std::unique_ptr<KvToken>> RDBMmapReader::getKV(int64_t expiration_
             key = readEncodedString(length);
             length = length::fromByte(&mapped[offset]);
             n = readIntEncodedAsString(length);
-            offset += n;
+            offsetAdvance(n);
             printf("List quick list: '%s'. Len: %d \n", key.c_str(), n);
             break;
         case ValueType::UNKNOWN:
@@ -165,7 +172,7 @@ std::optional<std::unique_ptr<Token>> RDBMmapReader::getDBSelector()
 {
     int byte = static_cast<int>(static_cast<uint8_t>(mapped[offset]));
     header.database_selector = byte;
-    offset += 1;
+    offsetAdvance(1);
     return std::make_unique<IntToken>(IntToken{RDBType::DATABASE_SELECTOR, "db", byte});
 }
 
@@ -231,42 +238,42 @@ int RDBMmapReader::readIntEncodedAsString(Length length)
 {
     int n = 0;
     unsigned char buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    offset += 1;
+    offsetAdvance(1);
 
     switch (length)
     {
         case Length::SPECIAL_8_BIT_INT:
             n = static_cast<int>(static_cast<uint8_t>(mapped[offset]));
-            offset += 1;
+            offsetAdvance(1);
             return n;
         case Length::SPECIAL_16_BIT_INT:
             std::memcpy(buf, &mapped[offset], 2);
-            offset += 2;
+            offsetAdvance(2);
             n = boost::endian::load_little_u16(buf);
             return n;
         case Length::SPECIAL_32_BIT_INT:
             std::memcpy(buf, &mapped[offset], 4);
-            offset += 4;
+            offsetAdvance(4);
             n = boost::endian::load_little_u32(buf);
             return n;
         case Length::NEXT_6_BITS_ARE_LENGTH:
             n = static_cast<int>(static_cast<uint8_t>(mapped[offset]));
             n = n & 0b00111111;
-            offset += 1;
+            offsetAdvance(1);
             return n;
         case Length::ADD_BYTE_FOR_LENGTH:
             n = static_cast<int>(static_cast<uint8_t>(mapped[offset]));
             buf[0] = n & 0b00111111;
-            offset += 1;
+            offsetAdvance(1);
             buf[1] = static_cast<uint8_t>(mapped[offset]);
-            offset += 1;
+            offsetAdvance(1);
             n = boost::endian::load_little_u16(buf);
             return n;
         case Length::NEXT_4_BYTES_ARE_LENGTH:
             std::memcpy(buf, &mapped[offset], 4);
             n = static_cast<int>(static_cast<uint8_t>(mapped[offset]));
             buf[0] = n & 0b00111111;
-            offset += 4;
+            offsetAdvance(4);
             n = boost::endian::load_little_u32(buf);
             return n;
         case Length::SPECIAL_COMPRESSED:
@@ -291,20 +298,20 @@ std::string RDBMmapReader::readEncodedString(Length length)
     {
         case Length::NEXT_6_BITS_ARE_LENGTH:
             n = type & 0b00111111;
-            offset += 1;
+            offsetAdvance(1);
             result = std::string(&mapped[offset], n);
-            offset += n;
+            offsetAdvance(n);
             return result;
         case Length::ADD_BYTE_FOR_LENGTH:
             n = type & 0b00111111;
-            offset += 1;
+            offsetAdvance(1);
 
             nn[0] = static_cast<uint8_t>(mapped[offset]);
             nn[1] = n;
             size = boost::endian::load_little_u64(nn);
 
             result = std::string(&mapped[offset], size);
-            offset += size;
+            offsetAdvance(size);
             return result;
         case Length::NEXT_4_BYTES_ARE_LENGTH:
             break;
@@ -314,6 +321,15 @@ std::string RDBMmapReader::readEncodedString(Length length)
     }
 
     return "";
+}
+
+void RDBMmapReader::offsetAdvance(long length)
+{
+    if (offset + length > file_size)
+    {
+        throw std::runtime_error("Error: offset out of bounds");
+    }
+    offset += length;
 }
 
 void RDBMmapReader::printHeaderInfo() const

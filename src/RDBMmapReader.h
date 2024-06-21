@@ -25,7 +25,7 @@ public:
 private:
     char * mapped;
 
-    long file_size;
+    uint64_t file_size;
     int fd;
     RedisHeader header;
     uint64_t offset = 0;
@@ -34,6 +34,7 @@ private:
     std::optional<std::unique_ptr<Token>> getDBSelector();
     std::optional<std::unique_ptr<Token>> getResizeDB();
     std::optional<std::unique_ptr<KvToken>> getKV(int64_t expiration_sec);
+    void offsetAdvance(long length);
 
     std::string readEncodedString(Length length);
     int readIntEncodedAsString(Length length);
